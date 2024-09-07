@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: SimpleJWT
+  datasource:
+    url: jdbc:mysql://localhost:13306/jpa_test
+    username: root
+    password: root
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    open-in-view: false
+
+logging:
+  level:
+    org:
+      springframework:
+        security:
+          oauth2: trace
+
+
+#logging.level.org.springframework.security.oauth2
+
+rsa:
+  public-key: classpath:certs/public.pem
+  private-key: classpath:certs/private.pem
