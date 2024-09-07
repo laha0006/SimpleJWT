@@ -1,12 +1,12 @@
 package dev.tolana.simplejwt.login;
 
+import dev.tolana.simplejwt.login.model.AuthResponseDto;
+import dev.tolana.simplejwt.login.model.RegisterRequestDto;
 import dev.tolana.simplejwt.user.AppUser;
 import dev.tolana.simplejwt.user.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
