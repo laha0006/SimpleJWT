@@ -69,4 +69,10 @@ public class AuthController {
     public String profile(Authentication authentication) {
         return authentication.getName();
     }
+
+
+    @GetMapping()
+    public String sayHello() {
+        return "Hello World";
+    }
 }
