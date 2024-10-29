@@ -6,6 +6,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import dev.tolana.simplejwt.login.CustomOauthSuccessHandler;
 import dev.tolana.simplejwt.login.RsaKeyProperties;
 import dev.tolana.simplejwt.login.TokenService;
 import dev.tolana.simplejwt.user.UserService;
@@ -26,17 +27,22 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final RsaKeyProperties keys;
-    private final AuthenticationConfiguration authenticationConfiguration;
+//    private final RsaKeyProperties keys;
+//    private final AuthenticationConfiguration authenticationConfiguration;
+    private final CustomOauthSuccessHandler customOauthSuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, UserService userService, TokenService tokenService) throws Exception {
@@ -46,13 +52,13 @@ public class SecurityConfig {
                         .requestMatchers("/").permitAll()
                         .requestMatchers("/register").permitAll()
                         .requestMatchers("/login").permitAll()
+                        .requestMatchers("/page").permitAll()
+                        .requestMatchers("/login/success").permitAll()
+                        .requestMatchers("/oauth2/authorization/github").permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
-                    .successHandler((request, response, authentication) -> {
-                        String jwtToken = createJwtToken((OAuth2User) authentication.getPrincipal());
-                        response.setContentType("application/json");
-                        response.getWriter().write("{\"token\": \"" + jwtToken + "\"}");
-                    }))
+                        .successHandler(customOauthSuccessHandler))
+//                        .loginPage("/oauth2/authorization/github"))
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -60,43 +66,60 @@ public class SecurityConfig {
                 .build();
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
 
     @Bean
-    public JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withPublicKey(keys.publicKey()).build();
+    public CorsConfigurationSource corsConfigurationSource() {
+        System.out.println("############ CORS CONFIG SET UP #####");
+        // Set up CORS configuration
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://127.0.0.1:5500","http://localhost:1337","http://127.0.0.1:1337", "http://localhost:63342"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+
+        // Apply the configuration to all URLs
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
-    @Bean
-    public JwtEncoder jwtEncoder() {
-        JWK jwk = new RSAKey.Builder(keys.publicKey()).privateKey(keys.privateKey()).build();
-        JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
-        return new NimbusJwtEncoder(jwks);
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager() throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
-
-    public String createJwtToken(OAuth2User user) {
-        Instant now = Instant.now();
-
-        JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("self")
-                .issuedAt(now)
-                .expiresAt(now.plus(5, ChronoUnit.MINUTES))
-                .subject(user.getName())
-                .claim("role", "USER")
-                .build();
-
-        return jwtEncoder().encode(JwtEncoderParameters.from(claims)).getTokenValue();
-    }
+//    @Bean
+//    public PasswordEncoder passwordEncoder() {
+//        return new BCryptPasswordEncoder();
+//    }
+//
+//
+//    @Bean
+//    public JwtDecoder jwtDecoder() {
+//        return NimbusJwtDecoder.withPublicKey(keys.publicKey()).build();
+//    }
+//
+//    @Bean
+//    public JwtEncoder jwtEncoder() {
+//        JWK jwk = new RSAKey.Builder(keys.publicKey()).privateKey(keys.privateKey()).build();
+//        JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
+//        return new NimbusJwtEncoder(jwks);
+//    }
+//
+//    @Bean
+//    public AuthenticationManager authenticationManager() throws Exception {
+//        return authenticationConfiguration.getAuthenticationManager();
+//    }
+//
+//
+//    public String createJwtToken(OAuth2User user) {
+//        Instant now = Instant.now();
+//
+//        JwtClaimsSet claims = JwtClaimsSet.builder()
+//                .issuer("self")
+//                .issuedAt(now)
+//                .expiresAt(now.plus(5, ChronoUnit.MINUTES))
+//                .subject(user.getName())
+//                .claim("role", "USER")
+//                .build();
+//
+//        return jwtEncoder().encode(JwtEncoderParameters.from(claims)).getTokenValue();
+//    }
 
 }
 //    @Bean
