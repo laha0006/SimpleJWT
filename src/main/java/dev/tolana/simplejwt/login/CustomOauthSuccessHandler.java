@@ -37,7 +37,10 @@ public class CustomOauthSuccessHandler implements AuthenticationSuccessHandler {
 
 
          String jwt = tokenService.createJwtToken(user);
-         response.getWriter().write("{\"token\":\"" + jwt + "\"}");
+         response.setContentType("text/html");
+         response.getWriter().write(
+            "<script>window.opener.postMessage({ token: '" + jwt + "' }, '*'); window.close();</script>"
+        );
 
     }
 }
